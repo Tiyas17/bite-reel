@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles/home.css";
@@ -45,6 +45,7 @@ const Home = () => {
   const navigate = useNavigate();
   // Sample data - replace with API call
   const [videos, setVideos] = useState([]);
+  const videoRefs = useRef([]);
 
   useEffect(() => {
     axios
@@ -59,20 +60,50 @@ const Home = () => {
       });
   }, []);
 
+  useEffect(() => {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+  const video = entry.target;
+
+  if (entry.isIntersecting) {
+    videoRefs.current.forEach((v) => {
+      if (v && v !== video) v.pause();
+    });
+    video.play().catch(() => {});
+  } else {
+    video.pause();
+  }
+});
+    },
+    { threshold: 0.6 } // 60% visible
+  );
+
+  videoRefs.current.forEach((video) => {
+    if (video) observer.observe(video);
+  });
+
+  return () => {
+    videoRefs.current.forEach((video) => {
+      if (video) observer.unobserve(video);
+    });
+    observer.disconnect();
+  };
+}, [videos]);
+
   return (
     <div className="reels-container">
       <div className="reels-scroll">
-        {videos.map((video) => (
+        {videos.map((video,index) => (
           <div key={video._id} className="reel-item">
             <video
-              src={video.video}
-              alt={video.storeName}
-              className="reel-media"
-              autoPlay
-              muted
-              loop
-              playsInline
-            />
+  ref={(el) => (videoRefs.current[index] = el)}
+  src={video.video}
+  className="reel-media"
+  muted
+  loop
+  playsInline
+/>
             <div className="reel-overlay">
               <div className="reel-content">
                 <h3>{video.name}</h3>
