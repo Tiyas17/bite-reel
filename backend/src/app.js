@@ -5,6 +5,7 @@ const cors = require("cors");
 const app = express();
 const authroutes = require("./routes/auth.routes");
 const foodroutes = require("./routes/food.routes");
+const foodPartnerRoutes = require("./routes/food-partner.routes");
 
 app.use(
   cors({
@@ -20,6 +21,7 @@ app.use(cookieParser());
 
 app.use("/api/auth", authroutes);
 app.use("/api/food", foodroutes);
+app.use('/api/food-partner', foodPartnerRoutes);
 
 module.exports = app;
 

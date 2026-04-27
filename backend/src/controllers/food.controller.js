@@ -7,6 +7,8 @@
 */
 
 const foodModel = require("../models/food.model");
+const likeModel=require('../models/likes.model');
+const saveModel = require("../models/save.model");
 const storageService = require("../services/storage.service");
 
 //to generate unique ids for file names
@@ -52,7 +54,100 @@ async function getFoodItems(req, res) {
   });
 }
 
+async function likeFoodItem(req, res) {
+const {foodId}=req.body;
+const user=req.user;
+const isAlreadyLiked=await likeModel.findOne({
+  user:user._id,
+  food:foodId,
+})
+
+if(isAlreadyLiked){
+  //unlike the food item
+  await likeModel.deleteOne({
+    user:user._id,
+    food:foodId,
+  });
+  await foodModel.findByIdAndUpdate(foodId, {
+    $inc:{likes:-1},
+  });
+  return res.status(200).json({
+    message:"Food item unliked successfully",
+  })
+}
+
+const like=await likeModel.create({
+  user:user._id,
+  food:foodId,
+})
+
+await foodModel.findByIdAndUpdate(foodId, {
+  $inc:{likes:1},
+})
+
+res.status(201).json({
+  message:"Food item liked successfully",
+  like
+})
+}
+
+async function saveFoodItem(req, res) {
+  const {foodId}=req.body;
+  const user=req.user;
+
+  const isAlreadySaved=await saveModel.findOne({
+  user:user._id,
+  food:foodId,
+})
+
+if(isAlreadySaved){
+  saveModel.deleteOne({
+    user:user._id,
+    food:foodId
+  })
+
+  await foodModel.findByIdAndUpdate(foodId,{
+    $inc:{savesCount:-1},
+  })
+
+  return res.status(200).json({
+    message:"Food item unsaved successfully",
+  })
+}
+
+const save=await saveModel.create({
+  user:user._id,
+  food:foodId,    
+})
+await foodModel.findByIdAndUpdate(foodId,{
+  $inc:{savesCount:1},
+})
+res.status(201).json({
+  message:"Food item saved successfully",
+  save,
+})
+}
+
+async function getSavedFoodItems(req, res) {
+  const user=req.user;
+  const savedItems=await saveModel.find({user:user._id}).populate('food');
+
+  if(!savedItems || savedItems.length===0){
+    return res.status(404).json({
+      message:"No saved food items found for this user",
+    })
+  } 
+
+  res.status(200).json({
+    message:"Saved food items fetched successfully",
+    savedItems
+  })
+}
+
 module.exports = {
   createFood,
   getFoodItems,
+  likeFoodItem,
+  saveFoodItem,
+  getSavedFoodItems,
 };
