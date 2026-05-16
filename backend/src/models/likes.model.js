@@ -1,20 +1,23 @@
-const mongoose=require('mongoose');
+const mongoose = require('mongoose');
 
-const likeSchema=new mongoose.Schema({
-    user:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'user',
-        required:true,
+const likeSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user',
+        required: true,
     },
-    food:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'food',
-        required:true,
+    food: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'food',
+        required: true,
     },
-},{
-    timestamps:true,
-})
+}, {
+    timestamps: true,
+});
 
-const likeModel=mongoose.model('like',likeSchema);
+// Prevent duplicate likes from same user on same food
+likeSchema.index({ user: 1, food: 1 }, { unique: true });
 
-module.exports=likeModel;   
+const likeModel = mongoose.model('like', likeSchema);
+
+module.exports = likeModel;
